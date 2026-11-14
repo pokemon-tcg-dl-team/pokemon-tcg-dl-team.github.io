@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PokeAgent · Code</title>
+<meta name="description" content="PokeAgent code is still training. The repository will be published with our results.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .stage { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 1; }
+  .critter { position: absolute; left: 0; top: 0; image-rendering: pixelated; will-change: transform; }
+  .critter svg { display: block; animation: bob 0.9s steps(2) infinite; }
+
+  @keyframes bob { 50% { transform: translateY(-4px); } }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .cs {
+    position: relative; z-index: 2; flex: 1; width: 100%; max-width: 760px; margin: 0 auto;
+    padding: 48px 24px 88px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 28px;
+  }
+  .cs-box {
+    width: 100%; background: #0f1f0dE6; border: 3px solid #9bbc0f; box-shadow: 8px 8px 0 #306230, inset 0 0 0 3px #0d1a0b, inset 0 0 0 5px #306230;
+    padding: 40px clamp(20px, 5vw, 48px); display: flex; flex-direction: column; align-items: center; gap: 24px;
+  }
+  .cs-eyebrow { font-family: 'Press Start 2P', monospace; font-size: 11px; color: #9fb574; display: flex; gap: 10px; align-items: center; }
+  .cs-eyebrow .dot { width: 10px; height: 10px; background: #c4e04a; box-shadow: 0 0 10px #c4e04a; display: block; animation: blink 1s steps(1) infinite; }
+  .cs h1 { font-size: clamp(22px, 4vw, 40px); line-height: 1.45; }
+  .cs p { margin: 0; font-size: 17px; line-height: 1.7; color: #c9d99c; max-width: 34em; text-wrap: pretty; }
+
+  .bar-wrap { width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 10px; }
+  .bar-meta { display: flex; justify-content: space-between; font-family: 'Press Start 2P', monospace; font-size: 9px; color: #9fb574; }
+  .bar { height: 22px; border: 3px solid #9bbc0f; padding: 3px; background: #0d1a0b; }
+  .bar-fill { height: 100%; width: 0; background: repeating-linear-gradient(90deg, #9bbc0f 0 12px, #0d1a0b 12px 15px); transition: width .25s steps(4); }
+  .log {
+    width: 100%; max-width: 460px; min-height: 66px; text-align: left; font-size: 13px; line-height: 1.7; color: #9fb574;
+    border-top: 2px dashed #306230; padding-top: 12px;
+  }
+  .log .ok { color: #c4e04a; }
+  .cs-actions { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; align-items: center; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .critter svg, .cs-eyebrow .dot { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="scanlines" aria-hidden="true"></div>
+  <div id="stage" class="stage" aria-hidden="true"></div>
+
+  <header class="top">
+    <a href="index.html" class="brand"><span class="brand-mark" aria-hidden="true"></span>POKEAGENT</a>
+    <nav class="nav">
+      <a href="index.html#models">Models</a>
+      <a href="index.html#results">Results</a>
+      <a href="index.html#team">Team</a>
+    </nav>
+  </header>
+
+  <main class="cs">
+    <div class="cs-box">
+      <div class="cs-eyebrow"><span class="dot" aria-hidden="true"></span><span>REPO STATUS · LOCKED</span></div>
+      <h1>No published work yet.</h1>
+      <p>Our agents are still in training. The code, configs and training runs will be published together with our results in February 2027.</p>
+
+      <div class="bar-wrap">
+        <div class="bar-meta"><span id="epoch">EPOCH 0</span><span id="pct">0%</span></div>
+        <div class="bar" role="progressbar" aria-label="Training progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="bar"><div class="bar-fill" id="fill"></div></div>
+      </div>
+
+      <div class="log" id="log" aria-live="polite"></div>
+
+      <div class="cs-actions">
+        <a href="index.html" class="btn-join">◀ BACK TO BASE</a>
+        <a href="https://www.kaggle.com/competitions/the-pokemon-company-ptcg-ai-battle-challenge-playground" class="btn-kit">VIEW ON KAGGLE</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <div class="foot-inner">
+      <span>A Deep Learning course project at AAU Klagenfurt for the Kaggle PTCG AI Battle Challenge. Pokémon and the Pokémon TCG are trademarks of their respective owners.</span>
+      <a href="index.html">Home</a>
+    </div>
+  </footer>
+</div>
+
+<script>
+(() => {
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---- Original pixel critters (8-12px grids). Legend: 1 dark, 2 mid, 3 light, 4 eye-white, . empty
+  const SPRITES = {
+    blob: [
+      '...1111...',
+      '..133331..',
+      '.13333331.',
+      '1334334331',
+      '1331331331',
+      '1333333331',
+      '1322222231',
+      '.11111111.'
+    ],
+    bird: [
+      '....111.....',
+      '...13331....',
+      '..1343311...',
+      '..13133321..',
+      '1113333221..',
+      '12233332221.',
+      '.1222222211.',
+      '..11211211..',
+      '...1..1.....'
+    ],
+    cat: [
+      '1........1',
+      '11......11',
+      '1311111131',
+      '1333333331',
+      '1343333431',
+      '1313333131',
+      '1333113331',
+      '.12222221.',
+      '.12.11.21.',
+      '.11....11.'
+    ],
+    bug: [
+      '..1....1..',
+      '...1..1...',
+      '..111111..',
+      '.13333331.',
+      '1341331431',
+      '1331331331',
+      '.12211221.',
+      '1.1.11.1.1'
+    ],
+    ghost: [
+      '..111111..',
+      '.13333331.',
+      '1333333331',
+      '1341331431',
+      '1331331331',
+      '1333333331',
+      '1333113331',
+      '1313113131',
+      '.1.1..1.1.'
+    ]
+  };
+  const PAL = { '1': '#0f380f', '2': '#306230', '3': '#8bac0f', '4': '#e4f5a6' };
+  const LIGHT = { '1': '#306230', '2': '#4d6b2a', '3': '#9bbc0f', '4': '#e4f5a6' };
+
+  function svgFor(rows, scale, pal) {
+    const w = rows[0].length, h = rows.length;
+    let rects = '';
+    rows.forEach((row, y) => [...row].forEach((c, x) => {
+      if (pal[c]) rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${pal[c]}"/>`;
+    }));
+    return `<svg width="${w * scale}" height="${h * scale}" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges">${rects}</svg>`;
+  }
+
+  const stage = document.getElementById('stage');
+  const kinds = Object.keys(SPRITES);
+  const critters = [];
+  const COUNT = window.innerWidth < 600 ? 7 : 13;
+
+  for (let i = 0; i < COUNT; i++) {
+    const kind = kinds[i % kinds.length];
+    const scale = 3 + Math.floor(Math.random() * 4);           // 3..6 px per pixel
+    const far = scale <= 4;                                     // smaller = further back = dimmer
+    const el = document.createElement('div');
+    el.className = 'critter';
+    el.innerHTML = svgFor(SPRITES[kind], scale, far ? LIGHT : PAL);
+    el.style.opacity = far ? 0.35 : 0.7;
+    el.firstChild.style.animationDelay = (Math.random() * -1).toFixed(2) + 's';
+    stage.appendChild(el);
+    const dir = Math.random() < 0.5 ? 1 : -1;
+    if (dir < 0) el.firstChild.style.transform = 'scaleX(-1)';
+    critters.push({
+      el, dir,
+      x: Math.random() * window.innerWidth,
+      y: 60 + Math.random() * (document.documentElement.scrollHeight - 160),
+      speed: (far ? 12 : 22) + Math.random() * 18,               // px per second
+      hop: kind === 'bird' || kind === 'ghost' ? 18 : 6,
+      phase: Math.random() * Math.PI * 2,
+      w: SPRITES[kind][0].length * scale
+    });
+  }
+
+  function place(c, t) {
+    const yy = c.y + Math.sin(t / 600 + c.phase) * c.hop;
+    c.el.style.transform = `translate(${Math.round(c.x / 2) * 2}px, ${Math.round(yy / 2) * 2}px)`;
+  }
+
+  if (reduce) {
+    critters.forEach(c => place(c, 0));
+  } else {
+    let last = performance.now();
+    const tick = now => {
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      const W = window.innerWidth;
+      critters.forEach(c => {
+        c.x += c.dir * c.speed * dt;
+        if (c.dir > 0 && c.x > W + 20) c.x = -c.w - 20;
+        if (c.dir < 0 && c.x < -c.w - 20) c.x = W + 20;
+        place(c, now);
+      });
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  // ---- Fake training progress that never quite finishes
+  const fill = document.getElementById('fill'), pct = document.getElementById('pct'),
+        epoch = document.getElementById('epoch'), bar = document.getElementById('bar'), log = document.getElementById('log');
+  const lines = [
+    'loading replays ............ <span class="ok">ok</span>',
+    'behaviour cloning .......... training',
+    'ppo self-play .............. training',
+    'value search ............... training',
+    'publishing repo ............ <span class="ok">feb 2027</span>'
+  ];
+  let p = 0, e = 0, li = 0;
+  const shown = [];
+  function step() {
+    if (p < 99) p = Math.min(99, p + 1 + Math.floor(Math.random() * 6));
+    e += 1 + Math.floor(Math.random() * 9);
+    fill.style.width = p + '%';
+    pct.textContent = p + '%';
+    epoch.textContent = 'EPOCH ' + e;
+    bar.setAttribute('aria-valuenow', p);
+    if (li < lines.length && p > li * 22) {
+      shown.push(lines[li++]);
+      log.innerHTML = shown.slice(-3).map(l => '&gt; ' + l).join('<br>');
+    }
+  }
+  step();
+  setInterval(step, reduce ? 1500 : 450);
+})();
+</script>
+</body>
+</html>
