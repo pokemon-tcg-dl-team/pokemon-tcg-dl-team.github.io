@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PokeAgent</title>
+<meta name="description" content="PokeAgent: a deep-learning project for the Kaggle PTCG AI Battle Challenge, comparing three agents that play the Pokémon Trading Card Game.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="page">
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <header class="top">
+    <a href="#" class="brand"><span class="brand-mark" aria-hidden="true"></span>POKEAGENT</a>
+    <nav class="nav">
+      <a href="#models">Models</a>
+      <a href="#results">Results</a>
+      <a href="#team">Team</a>
+      <a href="https://github.com/pokemon-tcg-dl-team/pokemon-tcg-dl" class="nav-gh">GitHub ↗</a>
+    </nav>
+  </header>
+
+  <main class="main">
+    <div class="hero">
+      <div class="live">
+        <span id="liveDot" class="live-dot" aria-hidden="true"></span>
+        <span>KAGGLE PTCG CHALLENGE · 2026</span>
+      </div>
+      <h1>Train an agent. Play the cards.</h1>
+      <p class="lead">PokeAgent is a deep-learning project for the Kaggle PTCG AI Battle Challenge. We train and compare three agents — behaviour cloning, PPO, and a value-based search agent — that play the Pokémon Trading Card Game turn by turn.</p>
+      <div id="join" class="cta">
+        <a href="https://www.kaggle.com/competitions?search=PTCG" class="btn-join">▶ VIEW ON KAGGLE</a>
+        <a href="https://github.com/pokemon-tcg-dl-team/pokemon-tcg-dl" class="btn-kit">VIEW THE CODE</a>
+      </div>
+      <div class="hint">
+        <span class="kbd">ENTER</span>
+        <span>or press START on the device to watch a duel</span>
+      </div>
+    </div>
+
+    <div class="device-wrap">
+      <div class="glow" aria-hidden="true"></div>
+      <div id="device" class="device">
+
+        <div class="bezel">
+          <div class="bezel-label">
+            <span class="stripe pink"></span>
+            <span>PIXEL MATRIX · AGENT EDITION</span>
+            <span class="stripe blue"></span>
+          </div>
+          <div class="bezel-row">
+            <div class="pwr">
+              <span id="led" class="led"></span>
+              <span>PWR</span>
+            </div>
+
+            <button id="screen" class="screen" type="button" aria-label="Start a demo duel">
+              <div id="titleScreen" class="title-screen" hidden>
+                <div id="logo" class="logo">
+                  <span>POKE</span>
+                  <span>AGENT</span>
+                </div>
+                <div id="sub" class="sub">
+                  <span class="sub-text">TCG AGENT LEAGUE</span>
+                  <div class="sub-dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+                </div>
+                <span id="pressStart" class="press">PRESS START</span>
+              </div>
+
+              <div id="battleScreen" class="battle" hidden>
+                <div class="prizes-b">
+                  <span class="who">GREEDYBOT</span>
+                  <div id="prizesB" class="prize-row"></div>
+                  <span class="lbl">PRIZES</span>
+                </div>
+                <div class="bot-deck"></div>
+                <div id="enemyCard" class="card enemy">
+                  <div class="card-head"><span>BOT</span><span id="enemyHp">90</span></div>
+                  <div class="card-art"><span></span><span></span></div>
+                  <div class="hp"><div id="enemyHpBar"></div></div>
+                  <div id="enemyEnergy" class="energy"></div>
+                </div>
+                <div id="playerCard" class="card player">
+                  <div class="card-head"><span>PKA</span><span id="playerHp">120</span></div>
+                  <div class="card-art"><span></span><span></span></div>
+                  <div class="hp"><div id="playerHpBar"></div></div>
+                  <div id="playerEnergy" class="energy"></div>
+                </div>
+                <div class="prizes-a">
+                  <span class="who">POKEAGENT</span>
+                  <div id="prizesA" class="prize-row"></div>
+                  <span class="lbl">PRIZES</span>
+                </div>
+                <div class="deck"></div>
+                <div class="textbox"><span id="typed"></span><span id="caret" class="caret">▼</span></div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div class="wordmark"><span class="wm-main">PokeAgent</span><span class="wm-sub">ARENA</span></div>
+
+        <div class="controls">
+          <div class="dpad">
+            <button type="button" class="dpad-v js-start" aria-label="D-pad"></button>
+            <span class="dpad-h" aria-hidden="true"></span>
+            <span class="dpad-c" aria-hidden="true"></span>
+          </div>
+          <div class="ab">
+            <div class="ab-btn b"><button type="button" class="round js-start" aria-label="B button"></button><span>B</span></div>
+            <div class="ab-btn"><button type="button" class="round js-start" aria-label="A button"></button><span>A</span></div>
+          </div>
+        </div>
+
+        <div class="menu-btns">
+          <div class="pill-wrap"><span class="pill" aria-hidden="true"></span><span>SELECT</span></div>
+          <div class="pill-wrap"><button id="startBtn" type="button" class="pill js-start" aria-label="Start"></button><span>START</span></div>
+        </div>
+
+        <div class="speaker" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      </div>
+    </div>
+  </main>
+
+  <section id="models" class="sec">
+    <div class="sec-inner">
+      <div class="sec-head">
+        <span class="eyebrow">01 · MODELS</span>
+        <h2>Three agents, one game.</h2>
+        <p>We train three different agents and compare them head to head, with one serving as the benchmark for the others.</p>
+      </div>
+      <div class="grid grid-300">
+        <article class="model">
+          <span class="tag">AGENT 01</span>
+          <h3>Behaviour cloning</h3>
+          <p>Learns from recorded games: given the board state, it predicts the action a strong player would take.</p>
+        </article>
+        <article class="model">
+          <span class="tag">AGENT 02</span>
+          <h3>PPO</h3>
+          <p>Learns by playing: a policy trained with Proximal Policy Optimization through self-play and matches against baseline bots.</p>
+        </article>
+        <article class="model">
+          <span class="tag">AGENT 03</span>
+          <h3>Value-based search</h3>
+          <p>Learns to score board positions, then searches ahead over possible moves and picks the line with the best expected outcome.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="results" class="sec">
+    <div class="sec-inner">
+      <div class="sec-head">
+        <span class="eyebrow">02 · RESULTS</span>
+        <h2>Training in progress.</h2>
+        <p>Full results and the ablation study land in February 2027. Until then, follow the training runs live on Weights &amp; Biases.</p>
+      </div>
+      <div class="grid grid-220">
+        <div class="stat"><span class="num">--%</span><span class="lbl2">Win rate vs. baseline bots</span></div>
+        <div class="stat"><span class="num">#--</span><span class="lbl2">Kaggle leaderboard rank</span></div>
+        <div class="stat"><span class="num">3</span><span class="lbl2">Agents compared</span></div>
+      </div>
+      <a href="#" class="btn-outline">W&amp;B PROJECT ↗</a>
+    </div>
+  </section>
+
+  <section id="team" class="sec">
+    <div class="sec-inner">
+      <div class="sec-head">
+        <span class="eyebrow">03 · TEAM</span>
+        <h2>Player select.</h2>
+      </div>
+      <div class="grid grid-220">
+        <div class="member"><span class="avatar" aria-hidden="true">T</span><span class="mname">THANOS</span></div>
+        <div class="member"><span class="avatar" aria-hidden="true">T</span><span class="mname">THOR</span></div>
+        <div class="member"><span class="avatar" aria-hidden="true">A</span><span class="mname">ANNA</span></div>
+      </div>
+      <p class="supervisor">Supervised by Prof. Schekotihin · Deep Learning course, University of Klagenfurt (AAU).</p>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="foot-inner">
+      <span>A Deep Learning course project at AAU Klagenfurt for the Kaggle PTCG AI Battle Challenge. Pokémon and the Pokémon TCG are trademarks of their respective owners.</span>
+      <a href="https://github.com/pokemon-tcg-dl-team/pokemon-tcg-dl">View on GitHub</a>
+    </div>
+  </footer>
+</div>
+
+<script>
+  // Options (were the "Tweaks" in the design editor)
+  window.POKEAGENT_CONFIG = { autoplay: true, tilt: true };
+</script>
+<script src="script.js"></script>
+</body>
+</html>
